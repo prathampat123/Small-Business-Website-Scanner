@@ -15,11 +15,14 @@ This tool scans a geographic area (user-defined location + radius) to find small
 
 ### 2. Website Scorer
 - For each business returned, checks their website URL (if any)
-- Fetches the page and analyzes it using Claude to score it as:
-  - **Hot Lead** — no website at all
-  - **Warm Lead** — website exists but is outdated (old copyright year, no mobile viewport, broken layout, etc.)
-  - **Not a Lead** — modern, functional website
-- Signals Claude checks: copyright year in footer, `<meta name="viewport">` tag, CSS framework hints, last-modified HTTP header, overall design era
+- Fetches the page and runs a two-step analysis:
+  1. **Automated signal extraction** — pulls copyright year, mobile viewport tag, HTTPS status, HTTP Last-Modified header, CMS version hints (e.g. WordPress meta), CSS framework hints (Bootstrap version, etc.), and whether the page responds at all
+  2. **Claude review** — receives the stripped HTML (scripts/styles removed) + extracted signals, returns structured JSON with lead classification
+- Lead status outcomes:
+  - **Hot Lead** — no website URL, or URL returns error/blank/timeout
+  - **Warm Lead** — website exists but Claude finds 2+ outdated signals (e.g. copyright 2016, no mobile viewport, old Bootstrap)
+  - **Not a Lead** — modern, mobile-friendly, recently updated site
+- Claude returns: `{"lead_status": "hot|warm|none", "reason": "...", "signals": [...]}`
 
 ### 3. Lead Dashboard (Streamlit)
 - Interactive map (Folium/Pydeck) showing color-coded business pins by lead status
@@ -55,7 +58,8 @@ This tool scans a geographic area (user-defined location + radius) to find small
 | Database | SQLite via SQLAlchemy | Zero-config, local-first, easy to migrate later |
 | AI | Claude API (`claude-sonnet-4-6`) | Website scoring + proposal generation |
 | Business Data | Google Places API (New) | Best coverage, reviews, website URLs, categories |
-| Maps | Folium (Leaflet wrapper) | Free, no extra API key, embeds in Streamlit |
+| Maps | Mapbox | Polished UI, satellite view, custom icons, free up to 50k loads/month |
+| Database | Airtable | Spreadsheet-style web UI, shareable, no code needed to browse data |
 | Deployment | Streamlit Community Cloud (dashboard) + Railway (API) | Free tiers available |
 
 ---
@@ -96,6 +100,9 @@ Small-Business-Website-Scanner/
 ```
 GOOGLE_PLACES_API_KEY=   # Google Cloud — Places API (New)
 ANTHROPIC_API_KEY=       # console.anthropic.com
+MAPBOX_TOKEN=            # mapbox.com — free account
+AIRTABLE_API_KEY=        # airtable.com — personal access token
+AIRTABLE_BASE_ID=        # ID of the Airtable base (starts with "app...")
 ```
 
 ---
@@ -117,16 +124,16 @@ ANTHROPIC_API_KEY=       # console.anthropic.com
 
 ---
 
-## Data Models
+## Data Models (Airtable Tables)
 
-### Scan
+### Scans table
 - `id`, `created_at`, `location_query`, `lat`, `lng`, `radius_miles`, `total_results`
 
-### Business
-- `id`, `scan_id`, `name`, `address`, `phone`, `website_url`, `category`, `rating`, `review_count`, `lead_status` (hot/warm/none), `lat`, `lng`
+### Businesses table
+- `id`, `scan_id`, `name`, `address`, `phone`, `website_url`, `category`, `rating`, `review_count`, `lead_status` (Hot/Warm/Not a Lead), `website_signals` (comma-separated), `lat`, `lng`
 
-### Proposal
-- `id`, `business_id`, `created_at`, `design_brief`, `sections` (JSON), `headline`, `tagline`, `selling_points` (JSON), `seo_keywords` (JSON)
+### Proposals table
+- `id`, `business_id`, `created_at`, `design_brief`, `sections`, `headline`, `tagline`, `selling_points`, `seo_keywords`
 
 ---
 
