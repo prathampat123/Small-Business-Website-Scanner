@@ -33,7 +33,7 @@ This tool scans a geographic area (user-defined location + radius) to find small
 
 ### 4. Website Proposal Generator (Claude)
 - For any Hot or Warm Lead, user clicks "Generate Proposal"
-- Claude receives: business name, category, address, rating, review count, and a sample of their Google reviews
+- Claude receives: business name, category, address, rating, review count, and the top 5–10 Google reviews verbatim
 - Claude returns a structured proposal including:
   - **Design brief** — tone, color palette suggestion, style direction
   - **Suggested page sections** — e.g., Hero, Services, About, Testimonials, Contact
@@ -140,7 +140,7 @@ AIRTABLE_BASE_ID=        # ID of the Airtable base (starts with "app...")
 ## Claude Usage Guidelines
 
 - **Website scoring prompt:** Keep HTML to under 2000 tokens — strip scripts, styles, and comments before sending. Ask Claude to return JSON: `{"lead_status": "hot|warm|none", "reason": "...", "signals": [...]}`
-- **Proposal prompt:** Include the top 3–5 reviews verbatim. Ask Claude to return structured JSON matching the Proposal model fields.
+- **Proposal prompt:** Include the top 5–10 reviews verbatim. Ask Claude to return structured JSON matching the Proposal model fields.
 - **Always use `claude-sonnet-4-6`** — do not switch models without updating this file.
 
 ---
