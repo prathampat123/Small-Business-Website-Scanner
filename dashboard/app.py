@@ -18,6 +18,34 @@ PIN_COLORS = {
     "Not a Lead": "green",
 }
 
+# Friendly label → Google Places API (New) type string
+BUSINESS_TYPES = {
+    "Restaurant": "restaurant",
+    "Cafe": "cafe",
+    "Bakery": "bakery",
+    "Bar": "bar",
+    "Hair Salon": "hair_salon",
+    "Beauty Salon": "beauty_salon",
+    "Spa": "spa",
+    "Gym": "gym",
+    "Auto Repair": "car_repair",
+    "Plumber": "plumber",
+    "Electrician": "electrician",
+    "Dentist": "dentist",
+    "Doctor": "doctor",
+    "Veterinary Care": "veterinary_care",
+    "Real Estate Agency": "real_estate_agency",
+    "Lawyer": "lawyer",
+    "Accounting": "accounting",
+    "Clothing Store": "clothing_store",
+    "Furniture Store": "furniture_store",
+    "Florist": "florist",
+    "Pet Store": "pet_store",
+    "Hardware Store": "hardware_store",
+    "Book Store": "book_store",
+    "Jewelry Store": "jewelry_store",
+}
+
 st.set_page_config(page_title="Small Business Scanner", layout="wide")
 st.title("Small Business Scanner")
 
@@ -30,6 +58,12 @@ for key, default in [("businesses", []), ("drawn_geometry", None)]:
 with st.sidebar:
     st.header("Scan Settings")
     max_res = st.slider("Max results", 5, 20, 20)
+    selected_type_labels = st.multiselect(
+        "Business types",
+        list(BUSINESS_TYPES.keys()),
+        help="Leave empty to search all business types.",
+    )
+    included_types = [BUSINESS_TYPES[label] for label in selected_type_labels]
     st.divider()
     st.header("Filter")
     status_filter = st.selectbox(
@@ -135,6 +169,7 @@ if geom:
             "lng": center_lng,
             "radius_miles": radius_miles,
             "max_results": max_res,
+            "included_types": included_types,
         }
 
     elif g_type == "Polygon":
@@ -149,7 +184,7 @@ if geom:
             f"Rectangle — lat [{bounds['min_lat']:.5f} → {bounds['max_lat']:.5f}], "
             f"lng [{bounds['min_lng']:.5f} → {bounds['max_lng']:.5f}]"
         )
-        scan_payload = {"bounds": bounds, "max_results": max_res}
+        scan_payload = {"bounds": bounds, "max_results": max_res, "included_types": included_types}
 
     else:
         scan_payload = None

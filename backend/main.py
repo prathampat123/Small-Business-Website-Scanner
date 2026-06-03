@@ -39,6 +39,7 @@ class ScanRequest(BaseModel):
     radius_miles: float = 5.0
     max_results: int = 20
     bounds: BoundsModel | None = None
+    included_types: list[str] | None = None
 
 
 @app.post("/scan")
@@ -51,7 +52,7 @@ def run_scan(req: ScanRequest):
             haversine_miles(lat, lng, b.min_lat, b.min_lng),
             haversine_miles(lat, lng, b.max_lat, b.max_lng),
         )
-        businesses = search_businesses(lat, lng, radius_miles, req.max_results)
+        businesses = search_businesses(lat, lng, radius_miles, req.max_results, req.included_types)
         businesses = [
             biz for biz in businesses
             if b.min_lat <= biz["lat"] <= b.max_lat and b.min_lng <= biz["lng"] <= b.max_lng
@@ -60,12 +61,12 @@ def run_scan(req: ScanRequest):
     elif req.lat is not None and req.lng is not None:
         lat, lng = req.lat, req.lng
         radius_miles = req.radius_miles
-        businesses = search_businesses(lat, lng, radius_miles, req.max_results)
+        businesses = search_businesses(lat, lng, radius_miles, req.max_results, req.included_types)
         location_query = f"Pin ({lat:.4f}, {lng:.4f})"
     elif req.location:
         lat, lng = geocode_location(req.location)
         radius_miles = req.radius_miles
-        businesses = search_businesses(lat, lng, radius_miles, req.max_results)
+        businesses = search_businesses(lat, lng, radius_miles, req.max_results, req.included_types)
         location_query = req.location
     else:
         raise HTTPException(status_code=400, detail="Provide location, lat/lng, or bounds")

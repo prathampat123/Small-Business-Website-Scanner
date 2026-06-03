@@ -19,7 +19,13 @@ FIELD_MASK = ",".join([
 ])
 
 
-def search_businesses(lat: float, lng: float, radius_miles: float, max_results: int = 20) -> list[dict]:
+def search_businesses(
+    lat: float,
+    lng: float,
+    radius_miles: float,
+    max_results: int = 20,
+    included_types: list[str] | None = None,
+) -> list[dict]:
     radius_meters = radius_miles * 1609.34
     headers = {
         "Content-Type": "application/json",
@@ -35,6 +41,8 @@ def search_businesses(lat: float, lng: float, radius_miles: float, max_results: 
         },
         "maxResultCount": min(max_results, 20),
     }
+    if included_types:
+        body["includedTypes"] = included_types
 
     with httpx.Client(timeout=15) as client:
         response = client.post(PLACES_API_URL, json=body, headers=headers)
